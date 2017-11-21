@@ -1,0 +1,211 @@
+﻿
+@{
+    ViewBag.Title = "Offline";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+
+<div class="alert alert-success">
+    <h4 class="display-3" name="title"></h4>
+    <hr class="my-4">
+    <div class="left">
+        <button type="button" id="postData" name="postData" onclick="postData();">POST</button>
+        <span id="resultMessage" name="resultMessage" class="alert alert-success"></span>
+    </div>
+</div>
+
+<div class="jumbotron">
+    <h3 class="display-3" name="requestTitle"></h3>
+    <p class="lead" name="requestBody"></p>
+    <select id="ChangeState" name="ChangeState" onchange="updateRequest();">
+        <option value="0">لطفا انتخاب نمایید</option>
+        <option value="1">تصویب و ارسال به دبیرخانه</option>
+        <option value="2">تصویب و ارسال به دبیرخانه به همراه تغییر</option>
+        <option value="3">تصویب در حوزه اختیارات کمیسیون دائمی</option>
+        <option value="4">تصویب در حوزه اختیارات کمیسیون دائمی با تغییر</option>
+        <option value="5">عدم تایید</option>
+        <option value="6">تعویق</option>
+        <option value="7">خروج از دستور کار</option>
+    </select>
+    <hr class="my-4">
+    <p data-bind="">
+        <textarea id="ChangedBody" name="ChangedBody"></textarea>
+    </p>
+    <input type="hidden" id="requestId" name="requestId" />
+</div>
+
+<div class="container center">
+    <div class="btn-group" role="group" aria-label="Basic example">
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/assets/plugins/CKEditor/ckeditor.js"></script>
+    <script src="/Scripts/indexeddb/indexeddbmanager.js?@DateTime.Now.ToString("ddHHMMsss")"></script>
+    <script>
+        CKEDITOR.editorConfig = function (config) {
+            config.toolbar = [
+                { name: 'basicstyles', items: ['Bold', 'Italic', 'Underline', 'Strike', 'Subscript', 'Superscript', '-', 'RemoveFormat'] },
+            ];
+        };
+
+        CKEDITOR.replace('ChangedBody');
+
+        (function() {
+            var pluginName = 'autosave';
+
+            var timeOutId = 0,
+                delay = 2, // in seconds || CKEDITOR.config.autosave_delay
+                ajaxActive = false;
+
+            var startTimer = function(event) {
+                if(timeOutId) {
+                    clearTimeout(timeOutId);
+                }
+                timeOutId = setTimeout(onTimer, delay*1000, event);
+            }
+
+            var onTimer = function (event) {
+                if(ajaxActive) {
+                    startTimer(event);
+                    ajaxActive = false;
+                }
+                else {
+                    ajaxActive = true;
+                    updateRequest();
+                    console.log("auto save working...");
+                }
+            }
+
+            CKEDITOR.plugins.add( pluginName, {
+                init : function( editor ) {
+                    editor.on('key', startTimer);
+                }
+            });
+        })();
+        
+        function getFromDB() {
+            var id = @Request.RequestContext.RouteData.Values["id"];
+            read(id)
+        }
+
+        function getData(data) {
+            $('[name="title"]').html(data.Title);
+            for (var i = 1; i <= data.RequestResults.length; i++) {
+                $('div[class="btn-group"').append('<button type="button" class="btn btn-light" onclick="getRequest(' + data.RequestResults[i-1].Id + ');">' + i + '</button>')
+            }
+        }
+
+        function getRequest(id) {
+            updateRequest();
+            requestRead(id);
+        }
+
+        function setRequest(data) {
+            $('[name="requestTitle"]').html(data.Title);
+            $('[name="requestBody"]').html(data.RequestBody);
+            $('[name="requestId"]').val(data.Id);
+            $('[name="ChangedBody"]').html(data.TrusteeBody)
+            $('[name="ChangeState"]').val(data.ChangeState)
+            CKEDITOR.instances['ChangedBody'].setData(data.ChangedBody);
+
+           // requestFileRead(data.Id)
+        }
+
+        function updateRequest() {
+            if ($('[name="requestId"]').val() !== '') {
+                var request = {
+                    Id: parseInt($('[name="requestId"]').val()),
+                    Title: $('[name="requestTitle"]').html(),
+                    ChangedBody: CKEDITOR.instances['ChangedBody'].getData(),
+                    RequestBody: $('[name="requestBody"]').html(),
+                    ChangeState: $('[name="ChangeState"]').val()
+                }
+
+                requestPut(request);
+            }
+
+
+            ////////////////////////////////////////////////
+            //var xhr = new XMLHttpRequest();
+            //xhr.open("GET", "/Scripts/Voucher.js", true);
+            //xhr.responseType = "blob";
+            //xhr.onload = function (e) {
+            //    if (this.status === 200) {
+            //        // `blob` response
+            //        console.log(this.response);
+            //        // create `objectURL` of `this.response` : `.pdf` as `Blob`
+            //        var file = window.URL.createObjectURL(this.response);
+            //        var a = document.createElement("a");
+            //        a.href = file;
+            //        a.download = this.response.name || "detailPDF";
+            //        document.body.appendChild(a);
+            //        a.click();
+            //        // remove `a` following `Save As` dialog, 
+            //        // `window` regains `focus`
+            //        window.onfocus = function () {
+            //            document.body.removeChild(a)
+            //        }
+            //    };
+            //};
+            //xhr.send();
+            ////////////////////////////////////////////////
+
+           // if ($('[name="reqFileUpload"]').val() !== '') {
+           //     // Create XHR
+           //     var xhr = new XMLHttpRequest(),
+           //         blob;
+
+           //     xhr.open("GET", $('[name="reqFileUpload"]').val(), true);
+           //     // Set the responseType to blob
+           //     xhr.responseType = "blob";
+
+           //     xhr.addEventListener("load", function () {
+           //         if (xhr.status === 200) {
+           //             console.log("file retrieved");
+        
+           //             // File as response
+           //             blob = xhr.response;
+
+           //             // Put the received blob into IndexedDB
+           //             putElephantInDb(blob);
+           //         }
+           //     }, false);
+           //     // Send XHR
+           ////     xhr.send();
+
+           //     var reqFile = {
+           //         Id: parseInt($('[name="requestId"]').val()),
+           //         File: blob
+           //     }
+
+           //     requestFilePut(reqFile);
+           // }
+        }
+
+        function postData() {
+            $('[name="postData"]').addClass("hide");
+            $('[name="resultMessage"]').addClass("hide");
+            readSessionForPost(@Request.RequestContext.RouteData.Values["id"]);
+        }
+
+        function sendSessionInfoToServer(session) {
+            $.ajax({
+                url: '/api/sessions/',
+                type: 'POST',
+                dataType: 'json',
+                data: session,
+                success: function (data, textStatus, xhr) {
+                    $('[name="postData"]').removeClass("hide");
+                    $('[name="resultMessage"]').removeClass("hide");
+
+                    $('[name="resultMessage"]').html('اطلاعات به سرور ارسال شد!');
+                    console.log('اطلاعات به سرور ارسال شد!');
+                },
+                error: function (xhr, textStatus, errorThrown) {
+                    console.log('Error in send info');
+                }
+            });
+        }
+    </script>
+}

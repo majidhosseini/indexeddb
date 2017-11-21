@@ -1,0 +1,180 @@
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge">
+
+    <script src="js/ckeditor/ckeditor.js"></script>
+    <script src="js/ckeditor/samples/js/sample.js"></script>
+
+
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    <!-- Optional theme -->
+    <link rel="stylesheet" href="/css/bootstrap-theme.min.css">
+
+    <link rel="stylesheet" href="js/ckeditor/samples/css/samples.css">
+    <link rel="stylesheet" href="js/ckeditor/samples/toolbarconfigurator/lib/codemirror/neo.css">
+
+</head>
+
+<body id="bodyElement">
+
+<div class="jumbotron">
+    <h3 class="display-3" name="requestTitle"></h3>
+    <p class="lead" name="requestBody"></p>
+    <select id="ChangeState" name="ChangeState" onchange="updateRequest();">
+        <option value="0">Select</option>
+        <option value="1">DabirKhani</option>
+        <option value="2">Dabir with edit</option>
+        <option value="3">Komisiion</option>
+        <option value="4">Commission With Edit</option>
+        <option value="5">Unaccepted</option>
+        <option value="6">Late</option>
+        <option value="7">Exit</option>
+    </select>
+    <hr class="my-4">
+    <p data-bind="">
+        <textarea id="ChangedBody" name="ChangedBody"></textarea>
+    </p>
+    <input type="hidden" id="requestId" name="requestId"/>
+</div>
+
+<div class="container center">
+    <div class="btn-group" role="group" aria-label="Basic example">
+    </div>
+</div>
+
+
+<div id="buttons">
+    <button id="openButton">Create/Open DB</button>
+    <!-- Clicking this opens the database. If there's no database to open, a database is created. -->
+    <button id="populateButton">Populate DB</button>
+    <button id="displayButton">Display DB</button>
+    <button id="deleteButton">Delete DB</button>
+</div>
+<div id="messages">
+    <p>If the database does not exist, clicking <strong>Create/Open DB</strong> creates it. If the database already
+        exists, clicking <strong>Create/Open DB</strong> opens it.</p>
+    <p>Thus, you must click the <strong>Create/Open DB</strong> button before clicking the <strong>Populate DB</strong>
+        button.</p>
+</div>
+<p>
+    <input type="file" id="fileSelector" multiple size="24">
+    <!-- Only display this element when the database is ready. -->
+</p>
+
+<script src="js/indexeddbmanager.js"></script>
+<script src="js/indexeddb.js?test4"></script>
+<script src="js/jquery.min.js"></script>
+<script src="js/bootstrap.min.js"></script>
+
+<script>
+      CKEDITOR.editorConfig = function (config) {
+            config.toolbar = [
+                { name: 'basicstyles', items: ['Bold', 'Italic', 'Underline', 'Strike', 'Subscript', 'Superscript', '-', 'RemoveFormat'] },
+            ];
+        };
+
+        CKEDITOR.replace('ChangedBody');
+
+        (function() {
+            var pluginName = 'autosave';
+
+            var timeOutId = 0,
+                delay = 2, // in seconds || CKEDITOR.config.autosave_delay
+                ajaxActive = false;
+
+            var startTimer = function(event) {
+                if(timeOutId) {
+                    clearTimeout(timeOutId);
+                }
+                timeOutId = setTimeout(onTimer, delay*1000, event);
+            }
+
+            var onTimer = function (event) {
+                if(ajaxActive) {
+                    startTimer(event);
+                    ajaxActive = false;
+                }
+                else {
+                    ajaxActive = true;
+                    updateRequest();
+                    console.log("auto save working...");
+                }
+            }
+
+            CKEDITOR.plugins.add( pluginName, {
+                init : function( editor ) {
+                    editor.on('key', startTimer);
+                }
+            });
+        })();
+
+        function getFromDB() {
+            var id = 1231
+            read(id)
+        }
+
+        function getData(data) {
+            $('[name="title"]').html(data.Title);
+            for (var i = 1; i <= data.RequestResults.length; i++) {
+                $('div[class="btn-group"').append('<button type="button" class="btn btn-light" onclick="getRequest(' + data.RequestResults[i-1].Id + ');">' + i + '</button>')
+            }
+        }
+
+        function getRequest(id) {
+            updateRequest();
+            requestRead(id);
+        }
+
+        function setRequest(data) {
+            $('[name="requestTitle"]').html(data.Title);
+            $('[name="requestBody"]').html(data.RequestBody);
+            $('[name="requestId"]').val(data.Id);
+            $('[name="ChangedBody"]').html(data.TrusteeBody)
+            $('[name="ChangeState"]').val(data.ChangeState)
+            CKEDITOR.instances['ChangedBody'].setData(data.ChangedBody);
+
+           // requestFileRead(data.Id)
+        }
+
+        function updateRequest() {
+            if ($('[name="requestId"]').val() !== '') {
+                var request = {
+                    Id: parseInt($('[name="requestId"]').val()),
+                    Title: $('[name="requestTitle"]').html(),
+                    ChangedBody: CKEDITOR.instances['ChangedBody'].getData(),
+                    RequestBody: $('[name="requestBody"]').html(),
+                    ChangeState: $('[name="ChangeState"]').val()
+                }
+
+                requestPut(request);
+            }
+        }
+
+        function postData() {
+            $('[name="postData"]').addClass("hide");
+            $('[name="resultMessage"]').addClass("hide");
+            readSessionForPost(1231);
+        }
+
+        function sendSessionInfoToServer(session) {
+            $.ajax({
+                url: 'http://92.50.13.16:6073/api/sessions/',
+                type: 'POST',
+                dataType: 'json',
+                data: session,
+                success: function (data, textStatus, xhr) {
+                    $('[name="postData"]').removeClass("hide");
+                    $('[name="resultMessage"]').removeClass("hide");
+
+                    $('[name="resultMessage"]').html('اطلاعات به سرور ارسال شد!');
+                    console.log('اطلاعات به سرور ارسال شد!');
+                },
+                error: function (xhr, textStatus, errorThrown) {
+                    console.log('Error in send info');
+                }
+            });
+        }
+</script>
+
+</body>
