@@ -29,6 +29,10 @@ sessionRequest.onupgradeneeded = function (event) {
       autoIncrement: true });
 }
 
+// file selector
+ document.getElementById('fileSelector').addEventListener('change', handleFileSelection, false);
+// ****************
+
 function read(id) {
     var transaction = db.transaction(["session"]);
     var objectStore = transaction.objectStore("session");
@@ -255,19 +259,13 @@ function handleFileSelection(evt) {
     return;
   }
 
-  var db = dbGlobals.db;
-  if (!db) {
-    console.log("db (i.e., dbGlobals.db) is null in handleFileSelection()");
-    return;
-  } // if
-
   try {
-    var transaction = db.transaction(dbGlobals.storeName, (IDBTransaction.READ_WRITE ? IDBTransaction.READ_WRITE : 'readwrite')); // This is either successful or it throws an exception. Note that the ternary operator is for browsers that only support the READ_WRITE value.
-  } // try
+    var transaction = db.transaction("reqfile", (IDBTransaction.READ_WRITE ? IDBTransaction.READ_WRITE : 'readwrite')); 
+  }
   catch (ex) {
     console.log("db.transaction exception in handleFileSelection() - " + ex.message);
     return;
-  } // catch
+  } 
 
   transaction.onerror = function(evt) {
     console.log("transaction.onerror fired in handleFileSelection() - error code: " + (evt.target.error ? evt.target.error : evt.target.errorCode));
@@ -280,26 +278,88 @@ function handleFileSelection(evt) {
   }
 
   try {
-    var objectStore = transaction.objectStore(dbGlobals.storeName); // Note that multiple put()'s can occur per transaction.
+    var objectStore = transaction.objectStore("reqfile"); 
 
     for (var i = 0, file; file = files[i]; i++) {
+			var data = {
+				requestId: 1,
+				file: file
+			}
 
-	
-
-      var putRequest = objectStore.put(file); // The put() method will update an existing record, whereas the add() method won't.
+      var putRequest = objectStore.put(data); 
       putRequest.onsuccess = function() {
         dbGlobals.empty = false;
-      } // There's at least one object in the database's object store. This info (i.e., dbGlobals.empty) is used in displayDB().
+      }
       putRequest.onerror = function(evt) {
         console.log("putRequest.onerror fired in handleFileSelection() - error code: " + (evt.target.error ? evt.target.error : evt.target.errorCode));
       }
-    } // for            
-  } // try
+    }             
+  } 
   catch (ex) {
     console.log("Transaction and/or put() exception in handleFileSelection() - " + ex.message);
     return;
-  } // catch
+  } 
+} 
 
-  document.getElementById('fileSelector').style.display = "none"; // An attempt has already been made to select file(s) so hide the "file picker" dialog box.
-} // handleFileSelection
+/// DISPALY file
+function displayDB(requestId) {
+	try {
+    var transaction = db.transaction("reqfile", (IDBTransaction.READ_ONLY ? IDBTransaction.READ_ONLY : 'readonly'));
+  } 
+  catch (ex) {
+    console.log("db.transaction() exception in displayDB() - " + ex.message);
+    return;
+  } 
 
+  try {
+    var objectStore = transaction.objectStore(dbGlobals.storeName);
+
+    try {
+      var cursorRequest = objectStore.openCursor();
+
+      cursorRequest.onerror = function(evt) {
+        console.log("cursorRequest.onerror fired in displayDB() - error code: " + (evt.target.error ? evt.target.error : evt.target.errorCode));
+      }
+
+      var fileListHTML = "<p><strong>File(s) in database:</strong></p><ul style='margin: -0.5em 0 1em -1em;'>"; 
+
+      cursorRequest.onsuccess = function(evt) {
+        console.log("cursorRequest.onsuccess fired in displayDB()");
+
+        var cursor = evt.target.result;
+        if (cursor) {
+        	if (cursor.value.requestId === requestId) {
+					  var videoFile = event.target.result;
+				    var URL = window.URL || window.webkitURL;
+				    var videoURL = URL.createObjectURL(cursor.value.file);
+		     
+		        dbGlobals.empty = false;
+		        fileListHTML += "<li>" + cursor.value.file.name;
+		        fileListHTML += "<p style='margin: 0 0 0 0.75em;'>" + cursor.value.file.lastModifiedDate + "</p>";
+		        fileListHTML += "<p style='margin: 0 0 0 0.75em;'>" + cursor.value.file.size + " bytes</p>";
+						fileListHTML += "<a href='" + videoURL + "'>link</a>";
+			    
+		        cursor.continue();
+          }
+        } else {
+          fileListHTML += "</ul>";
+          displayMessage(fileListHTML);
+        }
+
+        if (dbGlobals.empty) {
+          displayMessage("<p>The database is empty &amp;ndash; there's nothing to display.</p>");
+        }
+      } 
+    }
+    catch (innerException) {
+      console.log("Inner try exception in displayDB() - " + innerException.message);
+    } 
+  }
+  catch (outerException) {
+    console.log("Outer try exception in displayDB() - " + outerException.message);
+  } 
+} 
+
+function displayMessage(message) {
+  document.getElementById('messages').innerHTML = message;
+} 

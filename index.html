@@ -31,6 +31,8 @@
         <option value="6">Late</option>
         <option value="7">Exit</option>
     </select>
+
+	<input type="file" id="fileSelector" multiple size="24">
     <hr class="my-4">
     <p data-bind="">
         <textarea id="ChangedBody" name="ChangedBody"></textarea>
@@ -43,10 +45,13 @@
     </div>
 </div>
 
+<div id="messages">
+    
+</div>
 
+<!--
 <div id="buttons">
     <button id="openButton">Create/Open DB</button>
-    <!-- Clicking this opens the database. If there's no database to open, a database is created. -->
     <button id="populateButton">Populate DB</button>
     <button id="displayButton">Display DB</button>
     <button id="deleteButton">Delete DB</button>
@@ -59,11 +64,10 @@
 </div>
 <p>
     <input type="file" id="fileSelector" multiple size="24">
-    <!-- Only display this element when the database is ready. -->
 </p>
-
-<script src="js/indexeddbmanager.js"></script>
 <script src="js/indexeddb.js?test4"></script>
+-->
+<script src="js/indexeddbmanager.js"></script>
 <script src="js/jquery.min.js"></script>
 <script src="js/bootstrap.min.js"></script>
 
