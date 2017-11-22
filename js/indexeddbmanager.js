@@ -75,7 +75,7 @@ function add(sessionData) {
         .add(sessionData);
 
     session.onsuccess = function (event) {
-        console.log("جلسه به دیتابیس محلی اضافه شد");
+        $.amaran({'message':'جلسه به دیتابیس محلی اضافه شد'});
 
         for (var i in sessionData.RequestResults) {
             var request = sessionData.RequestResults[i]
@@ -84,7 +84,7 @@ function add(sessionData) {
                  .add(request);
 
             req.onsuccess = function (event) {
-                console.log("درخواست به دیتابیس محلی اضافه شد");
+                $.amaran({'message':'درخواست به دیتابیس محلی اضافه شد'});
             }
 
             req.onerror = function (event) {
@@ -150,6 +150,7 @@ function requestRead(id) {
     var request = objectStore.get(id);
 
     request.onsuccess = function (event) {
+    	displayDB(id)
         setRequest(request.result)
     }
 
@@ -170,64 +171,6 @@ function requestPut(data) {
 
     request.onerror = function (event) {
         alert("Unable to update request from database!");
-    };
-}
-
-
-//********************************** FILE ****************//
-function requestFileRead(id) {
-    var transaction = db.transaction(["reqfile"]);
-    var objectStore = transaction.objectStore("reqfile");
-    var requestFile = objectStore.get(id);
-
-    requestFile.onsuccess = function (event) {
-        // Get window.URL object
-        var URL = window.URL || window.webkitURL;
-
-        //var code = document.getElementById('reqFileUploadLink').textContent;
-        //var blob = new Blob($('[name="reqFileUpload"]').val(), { type: 'text/plain' });
-        //var url = URL.createObjectURL(blob);
-        //var worker = new Worker(url);
-        //URL.revokeObjectURL(url);
-
-        //worker.onmessage = function (e) {
-        //    console.log('worker returned: ', e.data);
-        //};
-
-
-
-        //// Create and revoke ObjectURL
-        //var imgURL = URL.createObjectURL(requestFile.result.File);
-
-        //// Set img src to ObjectURL
-        //var imgElephant = document.getElementById("reqFileUploadLink");
-        //imgElephant.setAttribute("href", imgURL);
-
-        //// Revoking ObjectURL
-        //URL.revokeObjectURL(imgURL);
-    }
-
-    requestFile.onerror = function (event) {
-        alert("Unable to retrieve reqfile from database!");
-    };
-}
-
-
-function requestFilePut(data) {
-    var transaction = db.transaction(["reqfile"], "readwrite");
-    var objectStore = transaction.objectStore("reqfile");
-    var requestFile = objectStore.put(data)
-
-    worker.onmessage = function (e) {
-        console.log('worker returned: ', e.data);
-    };
-
-    requestFile.onsuccess = function (event) {
-        console.log("successfuly reqfile updated.")
-    }
-
-    requestFile.onerror = function (event) {
-        alert("Unable to update reqfile from database!");
     };
 }
 
@@ -253,7 +196,7 @@ function sendSessionInfoWithRequestToServer(session) {
 function handleFileSelection(evt) {
   console.log("handleFileSelection()");
 
-  var files = evt.target.files; // The files selected by the user (as a FileList object).
+  var files = evt.target.files; 
   if (!files) {
     displayMessage("<p>At least one selected file is invalid - do not select any folders.</p><p>Please reselect and try again.</p>");
     return;
@@ -282,13 +225,13 @@ function handleFileSelection(evt) {
 
     for (var i = 0, file; file = files[i]; i++) {
 			var data = {
-				requestId: 1,
+				requestId: $('[name="requestId"]').val(),
 				file: file
 			}
 
       var putRequest = objectStore.put(data); 
       putRequest.onsuccess = function() {
-        dbGlobals.empty = false;
+         console.log("success file put in db")
       }
       putRequest.onerror = function(evt) {
         console.log("putRequest.onerror fired in handleFileSelection() - error code: " + (evt.target.error ? evt.target.error : evt.target.errorCode));
@@ -301,18 +244,11 @@ function handleFileSelection(evt) {
   } 
 } 
 
-/// DISPALY file
+/// DISPLAY file
 function displayDB(requestId) {
 	try {
-    var transaction = db.transaction("reqfile", (IDBTransaction.READ_ONLY ? IDBTransaction.READ_ONLY : 'readonly'));
-  } 
-  catch (ex) {
-    console.log("db.transaction() exception in displayDB() - " + ex.message);
-    return;
-  } 
-
-  try {
-    var objectStore = transaction.objectStore(dbGlobals.storeName);
+	    var transaction = db.transaction("reqfile", (IDBTransaction.READ_WRITE ? IDBTransaction.READ_WRITE : 'readwrite')); 
+    var objectStore = transaction.objectStore("reqfile");
 
     try {
       var cursorRequest = objectStore.openCursor();
@@ -324,30 +260,27 @@ function displayDB(requestId) {
       var fileListHTML = "<p><strong>File(s) in database:</strong></p><ul style='margin: -0.5em 0 1em -1em;'>"; 
 
       cursorRequest.onsuccess = function(evt) {
-        console.log("cursorRequest.onsuccess fired in displayDB()");
+        console.log('cursorRequest.onsuccess fired in displayDB()');
 
         var cursor = evt.target.result;
-        if (cursor) {
-        	if (cursor.value.requestId === requestId) {
+        if (cursor) {        
+        	if (cursor.value.requestId !== undefined && Number(cursor.value.requestId) === requestId) {
 					  var videoFile = event.target.result;
 				    var URL = window.URL || window.webkitURL;
 				    var videoURL = URL.createObjectURL(cursor.value.file);
 		     
-		        dbGlobals.empty = false;
 		        fileListHTML += "<li>" + cursor.value.file.name;
 		        fileListHTML += "<p style='margin: 0 0 0 0.75em;'>" + cursor.value.file.lastModifiedDate + "</p>";
 		        fileListHTML += "<p style='margin: 0 0 0 0.75em;'>" + cursor.value.file.size + " bytes</p>";
 						fileListHTML += "<a href='" + videoURL + "'>link</a>";
-			    
+			    		    
 		        cursor.continue();
+          } else {
+          	cursor.continue();
           }
         } else {
           fileListHTML += "</ul>";
           displayMessage(fileListHTML);
-        }
-
-        if (dbGlobals.empty) {
-          displayMessage("<p>The database is empty &amp;ndash; there's nothing to display.</p>");
         }
       } 
     }

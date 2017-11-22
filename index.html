@@ -2,18 +2,15 @@
     <meta http-equiv="X-UA-Compatible" content="IE=Edge">
 
     <script src="js/ckeditor/ckeditor.js"></script>
-    <script src="js/ckeditor/samples/js/sample.js"></script>
-
 
     <!-- Latest compiled and minified CSS -->
-    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/bootstrap.min.css">
 
     <!-- Optional theme -->
-    <link rel="stylesheet" href="/css/bootstrap-theme.min.css">
+    <link rel="stylesheet" href="css/bootstrap-theme.min.css">
 
-    <link rel="stylesheet" href="js/ckeditor/samples/css/samples.css">
-    <link rel="stylesheet" href="js/ckeditor/samples/toolbarconfigurator/lib/codemirror/neo.css">
-
+        <link rel="stylesheet" href="css/amaran.min.css">    
+        <link rel="stylesheet" href="css/animate.min.css">
 </head>
 
 <body id="bodyElement">
@@ -21,6 +18,12 @@
 <div class="jumbotron">
     <h3 class="display-3" name="requestTitle"></h3>
     <p class="lead" name="requestBody"></p>
+    
+    
+<div id="messages">
+    
+</div>
+    
     <select id="ChangeState" name="ChangeState" onchange="updateRequest();">
         <option value="0">Select</option>
         <option value="1">DabirKhani</option>
@@ -45,9 +48,6 @@
     </div>
 </div>
 
-<div id="messages">
-    
-</div>
 
 <!--
 <div id="buttons">
@@ -67,10 +67,10 @@
 </p>
 <script src="js/indexeddb.js?test4"></script>
 -->
-<script src="js/indexeddbmanager.js"></script>
 <script src="js/jquery.min.js"></script>
+<script src="/js/jquery.amaran.js"></script>
 <script src="js/bootstrap.min.js"></script>
-
+<script src="js/indexeddbmanager.js?2"></script>
 <script>
       CKEDITOR.editorConfig = function (config) {
             config.toolbar = [
@@ -172,7 +172,7 @@
                     $('[name="resultMessage"]').removeClass("hide");
 
                     $('[name="resultMessage"]').html('اطلاعات به سرور ارسال شد!');
-                    console.log('اطلاعات به سرور ارسال شد!');
+                    $.amaran({'message':'اطلاعات به سرور ارسال شد!'});
                 },
                 error: function (xhr, textStatus, errorThrown) {
                     console.log('Error in send info');
