@@ -25,8 +25,7 @@ sessionRequest.onupgradeneeded = function (event) {
     var db = event.target.result;
     var objectStore = db.createObjectStore("session", { keyPath: "Id" });
     var requestObjectStore = db.createObjectStore("request", { keyPath: "Id" });
-    var reqfileObjectStore = db.createObjectStore("reqfile", { keyPath: "Id",
-      autoIncrement: true });
+    var reqfileObjectStore = db.createObjectStore("reqfile", { keyPath: "Id", autoIncrement: true });
 }
 
 // file selector
@@ -39,7 +38,7 @@ function read(id) {
     var sessionRequest = objectStore.get(id);
 
     sessionRequest.onerror = function (event) {
-        alert("Unable to retrieve daفa from database!");
+        alert("Unable to retrieve data from database!");
     };
 
     sessionRequest.onsuccess = function (event) {
@@ -56,7 +55,7 @@ function read(id) {
                 },
                 error: function (xhr, textStatus, errorThrown) {
                     // TODO: !?
-                    console.log('Error in Database');
+                    $.amaran({'message':'در اتصال به داده‌های محلی مشکلی پیش آمده است'});
                 }
             });
         }
@@ -84,30 +83,15 @@ function add(sessionData) {
                  .add(request);
 
             req.onsuccess = function (event) {
-                $.amaran({'message':'درخواست به دیتابیس محلی اضافه شد'});
+                console.log('درخواست به دیتابیس محلی اضافه شد');
             }
 
             req.onerror = function (event) {
                 alert("Unable to add request, is aready exist in your database! ");
             }
-
-            var reqFile = {
-                Id: request.Id,
-                File: ''
-            }
-
-            var requestForFile = db.transaction(["reqfile"], "readwrite")
-                 .objectStore("reqfile")
-                 .add(reqFile);
-
-            requestForFile.onsuccess = function (event) {
-                console.log("reqfile added.");
-            }
-
-            requestForFile.onerror = function (event) {
-                alert("Unable to add reqfile, is aready exist in your database! ");
-            }
         }
+        
+        $.amaran({'message': sessionData.RequestResults.length + ' درخواست به دیتابیس محلی اضافه شد '});
     };
 
     session.onerror = function (event) {
@@ -167,10 +151,12 @@ function requestPut(data) {
 
     request.onsuccess = function (event) {
         console.log("successfuly request updated.")
+        doReady();
     }
 
     request.onerror = function (event) {
         alert("Unable to update request from database!");
+        doNotSaveDb();
     };
 }
 
@@ -267,12 +253,12 @@ function displayDB(requestId) {
         	if (cursor.value.requestId !== undefined && Number(cursor.value.requestId) === requestId) {
 					  var videoFile = event.target.result;
 				    var URL = window.URL || window.webkitURL;
-				    var videoURL = URL.createObjectURL(cursor.value.file);
+				    var fileURL = URL.createObjectURL(cursor.value.file);
 		     
 		        fileListHTML += "<li>" + cursor.value.file.name;
 		        fileListHTML += "<p style='margin: 0 0 0 0.75em;'>" + cursor.value.file.lastModifiedDate + "</p>";
 		        fileListHTML += "<p style='margin: 0 0 0 0.75em;'>" + cursor.value.file.size + " bytes</p>";
-						fileListHTML += "<a href='" + videoURL + "'>link</a>";
+						fileListHTML += "<a href='" + fileURL + "'>link</a>";
 			    		    
 		        cursor.continue();
           } else {
