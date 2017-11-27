@@ -4,10 +4,10 @@ function getFromDB() {
 }
 
 function getData(data) {
-    $('[name="title"]').html(data.Title);
-    for (var i = 1; i <= data.RequestResults.length; i++) {
-        $('div[class="btn-group"').append('<button type="button" class="btn btn-light" onclick="getRequest(' + data.RequestResults[i-1].Id + ');">' + i + '</button>')
-    }
+  $('[name="title"]').html(data.Title);
+  for (var i = 1; i <= data.RequestResults.length; i++) {
+      $('div[class="btn-group"').append('<button type="button" class="btn btn-light" onclick="getRequest(' + data.RequestResults[i-1].Id + ');">' + i + '</button>')
+  }
 
   requestRead(data.RequestResults[0].Id);
   endLoader();
@@ -19,28 +19,47 @@ function getRequest(id) {
 }
 
 function setRequest(data) {
-    $('[name="requestTitle"]').html(data.Title);
-    $('[name="requestBody"]').html(data.RequestBody);
-    $('[name="requestId"]').val(data.Id);
-    $('[name="ChangedBody"]').html(data.TrusteeBody)
-    $('[name="ChangeState"]').val(data.ChangeState)
-    $('[id="fileSelector"]').val('');
-    CKEDITOR.instances['ChangedBody'].setData(data.ChangedBody);
+  $('[name="requestTitle"]').html(data.Title);
+  $('[name="requestBody"]').html(data.RequestBody);
+  $('[name="requestId"]').val(data.Id);
+  $('[name="ChangedBody"]').html(data.TrusteeBody)
+  $('[name="ChangeState"]').val(data.ChangeState)
+  $('[id="fileSelector"]').val('');
+  CKEDITOR.instances['ChangedBody'].setData(data.ChangedBody);
 }
 
 function updateRequest() {
   doSaveDb();
   if ($('[name="requestId"]').val() !== '') {
     var request = {
-        Id: parseInt($('[name="requestId"]').val()),
-        Title: $('[name="requestTitle"]').html(),
-        ChangedBody: CKEDITOR.instances['ChangedBody'].getData(),
-        RequestBody: $('[name="requestBody"]').html(),
-        ChangeState: $('[name="ChangeState"]').val(),
-        isSynced: false
+      Id: parseInt($('[name="requestId"]').val()),
+      Title: $('[name="requestTitle"]').html(),
+      ChangedBody: CKEDITOR.instances['ChangedBody'].getData(),
+      RequestBody: $('[name="requestBody"]').html(),
+      ChangeState: $('[name="ChangeState"]').val(),
+      isSynced: false
     }
     requestPut(request);
+    postRequest(request)
   }
+}
+
+function postRequest(request) {
+  doPost();
+  $.ajax({
+    url: 'http://92.50.13.16:6073/api/sessions/' + 1220 + '/requests/',
+    type: 'POST',
+    dataType: 'json',
+    data: request,
+    success: function (result, textStatus, xhr) {
+      doSynced();
+      doRequestSynced(request.Id);
+    },
+    error: function (xhr, textStatus, errorThrown) {
+      doOrange();
+      console.log('Error in send info');
+    }
+  });
 }
 
 function postData() {
@@ -51,24 +70,24 @@ function postData() {
 
 function sendSessionInfoToServer(session) {
   doPost();
-    $.ajax({
-        url: 'http://92.50.13.16:6073/api/sessions/',
-        type: 'POST',
-        dataType: 'json',
-        data: session,
-        success: function (data, textStatus, xhr) {
-            $('[name="postData"]').removeClass("hide");
-            $('[name="resultMessage"]').removeClass("hide");
+  $.ajax({
+      url: 'http://92.50.13.16:6073/api/sessions/',
+      type: 'POST',
+      dataType: 'json',
+      data: session,
+      success: function (data, textStatus, xhr) {
+          $('[name="postData"]').removeClass("hide");
+          $('[name="resultMessage"]').removeClass("hide");
 
-            $('[name="resultMessage"]').html('اطلاعات به سرور ارسال شد!');
-            $.amaran({'message':'اطلاعات به سرور ارسال شد!'});
-            doSynced();
-        },
-        error: function (xhr, textStatus, errorThrown) {
-          doReady();
-            console.log('Error in send info');
-        }
-    });
+          $('[name="resultMessage"]').html('اطلاعات به سرور ارسال شد!');
+          $.amaran({'message':'اطلاعات به سرور ارسال شد!'});
+          doSynced();
+      },
+      error: function (xhr, textStatus, errorThrown) {
+        doOrange();
+        console.log('Error in send info');
+      }
+  });
 }
 
 function downloadFile(requestId) {
@@ -102,9 +121,24 @@ function uploadFile(file, reqFileId, requestId) {
     doSynced();
   }).fail(function (a, b, c) {
       console.log(a, b, c);
-      doReady();
+      doOrange();
   });
 }
+
+function handleFileSelection(evt) {
+  var files = evt.target.files;
+  if (!files) {
+    displayMessage("<p>At least one selected file is invalid - do not select any folders.</p><p>Please reselect and try again.</p>");
+    return;
+  }
+
+  var requestId = $('[name="requestId"]').val();
+  for (var i = 0, file; file = files[i]; i++) {
+    reqFilePut(file, requestId)
+  }
+}
+
+document.getElementById('fileSelector').addEventListener('change', handleFileSelection, false);
 
 function doLoader() {
   console.log('doLoader')
@@ -137,7 +171,7 @@ function doSynced() {
 }
 
 function doSaveDb() {
-  doSynced();
+
   document.getElementById("synceMessage").innerHTML = "در حال ذخیره سازی اطلاعات";
 }
 
@@ -154,37 +188,3 @@ function doNotSaveDb() {
 function displayMessage(message) {
   document.getElementById('messages').innerHTML = message;
 }
-
-
-function handleFileSelection(evt) {
-  var files = evt.target.files;
-  if (!files) {
-    displayMessage("<p>At least one selected file is invalid - do not select any folders.</p><p>Please reselect and try again.</p>");
-    return;
-  }
-
-/*  try {
-    var transaction = db.transaction("reqfile", (IDBTransaction.READ_WRITE ? IDBTransaction.READ_WRITE : 'readwrite'));
-  }
-  catch (ex) {
-    console.log("db.transaction exception in handleFileSelection() - " + ex.message);
-    return;
-  }
-
-  transaction.onerror = function(evt) {
-    console.log("transaction.onerror fired in handleFileSelection() - error code: " + (evt.target.error ? evt.target.error : evt.target.errorCode));
-  }
-  transaction.onabort = function() {
-    console.log("transaction.onabort fired in handleFileSelection()");
-  }
-  transaction.oncomplete = function() {
-    console.log("transaction.oncomplete fired in handleFileSelection()");
-  }
-*/
-  var requestId = $('[name="requestId"]').val();
-  for (var i = 0, file; file = files[i]; i++) {
-    reqFilePut(file, requestId)
-  }
-}
-
-document.getElementById('fileSelector').addEventListener('change', handleFileSelection, false);

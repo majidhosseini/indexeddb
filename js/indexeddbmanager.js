@@ -125,38 +125,6 @@ function readSessionForPost(id) {
     };
 }
 
-//************************** REQUEST *******************************//
-function requestRead(id) {
-    var transaction = db.transaction(["request"]);
-    var objectStore = transaction.objectStore("request");
-    var request = objectStore.get(id);
-
-    request.onsuccess = function (event) {
-    	displayDB(id)
-        setRequest(request.result)
-    }
-
-    request.onerror = function (event) {
-        alert("Unable to retrieve request from database!");
-    };
-}
-
-function requestPut(data) {
-    var transaction = db.transaction(["request"], "readwrite");
-    var objectStore = transaction.objectStore("request");
-    var request = objectStore.put(data)
-
-    request.onsuccess = function (event) {
-        console.log("successfuly request updated.")
-        doOrange();
-    }
-
-    request.onerror = function (event) {
-        alert("Unable to update request from database!");
-        doNotSaveDb();
-    };
-}
-
 function sendSessionInfoWithRequestToServer(session) {
     var objectStore = db.transaction("request").objectStore("request");
     var i = 0;
@@ -174,8 +142,62 @@ function sendSessionInfoWithRequestToServer(session) {
         }
     };
 }
+//************************** REQUEST *******************************//
+function requestRead(id) {
+    var transaction = db.transaction(["request"]);
+    var objectStore = transaction.objectStore("request");
+    var request = objectStore.get(id);
 
-// Request file database handling
+    request.onsuccess = function (event) {
+    	displayDB(id)
+        setRequest(request.result)
+    }
+
+    request.onerror = function (event) {
+        alert("Unable to retrieve request from database!");
+    };
+}
+
+function requestPut(data) {
+  var transaction = db.transaction(["request"], "readwrite");
+  var objectStore = transaction.objectStore("request");
+  var request = objectStore.put(data)
+
+  request.onsuccess = function (event) {
+    console.log("successfuly request updated.")
+  }
+
+  request.onerror = function (event) {
+    alert("Unable to update request from database!");
+    doNotSaveDb();
+  };
+}
+
+function doRequestSynced(id) {
+  var transaction = db.transaction(["request"], (IDBTransaction.READ_WRITE ? IDBTransaction.READ_WRITE : 'readwrite'));
+  var objectStore = transaction.objectStore("request");
+  var request = objectStore.get(id);
+
+  request.onsuccess = function(event) {
+    var data = event.target.result;
+    data.isSynced = true;
+
+    var requestUpdate = objectStore.put(data);
+    requestUpdate.onerror = function(event) {
+     console.log("doRequestSynced can not update request!")
+    };
+    requestUpdate.onsuccess = function(event) {
+      console.log("doRequestSynced successfuly.")
+      doSynced();
+    };
+  }
+
+  request.onerror = function (event) {
+    console.log("doRequestSynced can not get request!")
+  };
+}
+
+// Request file database handling ****************************************************************
 // PUT REQUEST FILE
 function reqFilePut(file, requestId) {
   var transaction = db.transaction(["reqfile"], "readwrite");
@@ -245,8 +267,7 @@ function displayDB(requestId) {
   }
 }
 
-
-// Update File
+// Update Sync to true File
 function doFileSynced(id) {
   var transaction = db.transaction(["reqfile"], (IDBTransaction.READ_WRITE ? IDBTransaction.READ_WRITE : 'readwrite'));
   var objectStore = transaction.objectStore("reqfile");

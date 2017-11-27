@@ -29,41 +29,38 @@
 <![endif]-->
 
 	<header id="entry-header" class="entry-header">
-			<h1 class="entry-title">در حال بارگزاری اطلاعات ...</h1>
-		</header>
+		<h1 class="entry-title">در حال بارگزاری اطلاعات ...</h1>
+	</header>
 
-		<div id="loader-wrapper">
-			<div id="loader"></div>
+	<div id="loader-wrapper">
+		<div id="loader"></div>
 
-			<div class="loader-section section-left"></div>
-      <div class="loader-section section-right"></div>
-
-		</div>
+		<div class="loader-section section-left"></div>
+    <div class="loader-section section-right"></div>
+	</div>
 
   <div class="jumbotron">
-      <h3 class="display-3" name="requestTitle"></h3>
-      <p class="lead" name="requestBody"></p>
-    <div id="messages">
-
-    </div>
+    <h3 class="display-3" name="requestTitle"></h3>
+    <p class="lead" name="requestBody"></p>
+    <div id="messages"></div>
 
     <select id="ChangeState" name="ChangeState" onchange="updateRequest();">
-        <option value="0">Select</option>
-        <option value="1">DabirKhani</option>
-        <option value="2">Dabir with edit</option>
-        <option value="3">Komisiion</option>
-        <option value="4">Commission With Edit</option>
-        <option value="5">Unaccepted</option>
-        <option value="6">Late</option>
-        <option value="7">Exit</option>
+      <option value="0">Select</option>
+      <option value="1">DabirKhani</option>
+      <option value="2">Dabir with edit</option>
+      <option value="3">Komisiion</option>
+      <option value="4">Commission With Edit</option>
+      <option value="5">Unaccepted</option>
+      <option value="6">Late</option>
+      <option value="7">Exit</option>
     </select>
 
 	<input type="file" id="fileSelector" multiple size="24">
-    <hr class="my-4">
-    <p data-bind="">
-        <textarea id="ChangedBody" name="ChangedBody"></textarea>
-    </p>
-    <input type="hidden" id="requestId" name="requestId"/>
+  <hr class="my-4">
+  <p data-bind="">
+    <textarea id="ChangedBody" name="ChangedBody"></textarea>
+  </p>
+  <input type="hidden" id="requestId" name="requestId"/>
 </div>
 
 <div class="container center">
@@ -90,7 +87,7 @@
 
 <script src="js/loader.js"></script>
 <script src="js/ckeditor/config.js?6"></script>
-<script src="js/indexeddbmanager.js?6"></script>
-<script src="js/main.js?6"></script>
+<script src="js/indexeddbmanager.js?9"></script>
+<script src="js/main.js?9"></script>
 </body>
 </html>

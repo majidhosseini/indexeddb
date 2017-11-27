@@ -77,7 +77,7 @@ h1 {
     }
 
     @-webkit-keyframes spin {
-        0%   { 
+        0%   {
             -webkit-transform: rotate(0deg);  /* Chrome, Opera 15+, Safari 3.1+ */
             -ms-transform: rotate(0deg);  /* IE 9 */
             transform: rotate(0deg);  /* Firefox 16+, IE 10+, Opera */
@@ -89,7 +89,7 @@ h1 {
         }
     }
     @keyframes spin {
-        0%   { 
+        0%   {
             -webkit-transform: rotate(0deg);  /* Chrome, Opera 15+, Safari 3.1+ */
             -ms-transform: rotate(0deg);  /* IE 9 */
             transform: rotate(0deg);  /* Firefox 16+, IE 10+, Opera */
@@ -127,7 +127,7 @@ h1 {
             -ms-transform: translateX(-100%);  /* IE 9 */
                 transform: translateX(-100%);  /* Firefox 16+, IE 10+, Opera */
 
-        -webkit-transition: all 0.7s 0.3s cubic-bezier(0.645, 0.045, 0.355, 1.000);  
+        -webkit-transition: all 0.7s 0.3s cubic-bezier(0.645, 0.045, 0.355, 1.000);
                 transition: all 0.7s 0.3s cubic-bezier(0.645, 0.045, 0.355, 1.000);
     }
 
@@ -136,13 +136,13 @@ h1 {
             -ms-transform: translateX(100%);  /* IE 9 */
                 transform: translateX(100%);  /* Firefox 16+, IE 10+, Opera */
 
--webkit-transition: all 0.7s 0.3s cubic-bezier(0.645, 0.045, 0.355, 1.000);  
+-webkit-transition: all 0.7s 0.3s cubic-bezier(0.645, 0.045, 0.355, 1.000);
         transition: all 0.7s 0.3s cubic-bezier(0.645, 0.045, 0.355, 1.000);
     }
-    
+
     .loaded #loader {
         opacity: 0;
-        -webkit-transition: all 0.3s ease-out;  
+        -webkit-transition: all 0.3s ease-out;
                 transition: all 0.3s ease-out;
     }
     .loaded #loader-wrapper {
@@ -152,10 +152,10 @@ h1 {
             -ms-transform: translateY(-100%);  /* IE 9 */
                 transform: translateY(-100%);  /* Firefox 16+, IE 10+, Opera */
 
-        -webkit-transition: all 0.3s 1s ease-out;  
+        -webkit-transition: all 0.3s 1s ease-out;
                 transition: all 0.3s 1s ease-out;
     }
-    
+
     /* JavaScript Turned Off */
     .no-js #loader-wrapper {
         display: none;
@@ -169,7 +169,7 @@ h1 {
         padding-bottom: 50px;
         width: 80%;
         max-width: 978px;
-    }  
+    }
 
 
 .entry-header {
@@ -325,7 +325,7 @@ sync
     height: 25px;
     margin: 15px 0 0 0px;
     border-radius: 50%;
-    border: 3px solid transparent;
+    border: 2px solid transparent;
     border-top-color: #3498db;
 
     -webkit-animation: spin 2s linear infinite; /* Chrome, Opera 15+, Safari 5+ */
@@ -342,7 +342,7 @@ sync
         right: 2px;
         bottom: 2px;
         border-radius: 50%;
-        border: 2px solid transparent;
+        border: 1px solid transparent;
         border-top-color: #e74c3c;
 
         -webkit-animation: spin 3s linear infinite; /* Chrome, Opera 15+, Safari 5+ */
@@ -376,7 +376,7 @@ sync
     border: 8px solid #92DC00;
     z-index: 1001;
 }
-    
+
 #ready {
     display: none;
     position: relative;
@@ -388,8 +388,4 @@ sync
     border-radius: 50%;
     border: 8px solid #EEAF00;
     z-index: 1001;
-}  
-    
-    
-
-
+}
