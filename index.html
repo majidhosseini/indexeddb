@@ -14,12 +14,12 @@
 
   <!-- Optional theme -->
   <link rel="stylesheet" href="css/bootstrap-theme.min.css">
-  
-  <link rel="stylesheet" href="css/amaran.min.css">    
+
+  <link rel="stylesheet" href="css/amaran.min.css">
   <link rel="stylesheet" href="css/animate.min.css">
   <link rel="stylesheet" href="css/loader.css">
   <link rel="stylesheet" href="css/sticky-footer.css">
-  
+
   <script src="js/modernizr.min.js"></script>
 </head>
 
@@ -40,15 +40,13 @@
 
 		</div>
 
-<div class="jumbotron">
-    <h3 class="display-3" name="requestTitle"></h3>
-    <p class="lead" name="requestBody"></p>
-    
-    
-<div id="messages">
-    
-</div>
-    
+  <div class="jumbotron">
+      <h3 class="display-3" name="requestTitle"></h3>
+      <p class="lead" name="requestBody"></p>
+    <div id="messages">
+
+    </div>
+
     <select id="ChangeState" name="ChangeState" onchange="updateRequest();">
         <option value="0">Select</option>
         <option value="1">DabirKhani</option>
@@ -73,175 +71,26 @@
     </div>
 </div>
 
-
-
 <footer class="footer">
   <div class="container">
-  	
+
 		<div id="syncer-wrapper">
 			<div id="syncer"></div>
 			<div id="synced"></div>
 			<div id="ready"></div>
 		</div>
-  
-    <span class="text-muted"></span>
+
+    <span id="synceMessage" class="text-muted"></span>
   </div>
 </footer>
 
 <script src="js/jquery.min.js"></script>
 <script src="/js/jquery.amaran.js"></script>
 <script src="js/bootstrap.min.js"></script>
-<script src="js/indexeddbmanager.js?2"></script>
+
 <script src="js/loader.js"></script>
-<script>
-  CKEDITOR.editorConfig = function (config) {
-        config.toolbar = [
-            { name: 'basicstyles', items: ['Bold', 'Italic', 'Underline', 'Strike', 'Subscript', 'Superscript', '-', 'RemoveFormat'] },
-        ];
-    };
-
-    CKEDITOR.replace('ChangedBody');
-
-    (function() {
-        var pluginName = 'autosave';
-
-        var timeOutId = 0,
-            delay = 2, // in seconds || CKEDITOR.config.autosave_delay
-            ajaxActive = false;
-
-        var startTimer = function(event) {
-            if(timeOutId) {
-                clearTimeout(timeOutId);
-            }
-            timeOutId = setTimeout(onTimer, delay*1000, event);
-        }
-
-        var onTimer = function (event) {
-            if(ajaxActive) {
-                startTimer(event);
-                ajaxActive = false;
-            }
-            else {
-                ajaxActive = true;
-                updateRequest();
-                $.amaran({'message':'auto save working...'});
-            }
-        }
-
-        CKEDITOR.plugins.add( pluginName, {
-            init : function( editor ) {
-                editor.on('key', startTimer);
-            }
-        });
-    })();
-
-    function getFromDB() {
-        var id = 1220
-        read(id)
-    }
-
-    function getData(data) {
-        $('[name="title"]').html(data.Title);
-        for (var i = 1; i <= data.RequestResults.length; i++) {
-            $('div[class="btn-group"').append('<button type="button" class="btn btn-light" onclick="getRequest(' + data.RequestResults[i-1].Id + ');">' + i + '</button>')
-        }
-			getRequest(data.RequestResults[0].Id); 
-      endLoader();
-    }
-
-    function getRequest(id) {
-        updateRequest();
-        requestRead(id);
-    }
-
-    function setRequest(data) {
-        $('[name="requestTitle"]').html(data.Id + ". " + data.Title);
-        $('[name="requestBody"]').html(data.RequestBody);
-        $('[name="requestId"]').val(data.Id);
-        $('[name="ChangedBody"]').html(data.TrusteeBody)
-        $('[name="ChangeState"]').val(data.ChangeState)
-        CKEDITOR.instances['ChangedBody'].setData(data.ChangedBody);
-    }
-
-    function updateRequest() {
-	    doSaveDb();
-        if ($('[name="requestId"]').val() !== '') {
-            var request = {
-            	
-                Id: parseInt($('[name="requestId"]').val()),
-                Title: $('[name="requestTitle"]').html(),
-                ChangedBody: CKEDITOR.instances['ChangedBody'].getData(),
-                RequestBody: $('[name="requestBody"]').html(),
-                ChangeState: $('[name="ChangeState"]').val()
-            }
-
-            requestPut(request);
-        }
-    }
-
-    function postData() {
-        $('[name="postData"]').addClass("hide");
-        $('[name="resultMessage"]').addClass("hide");
-        readSessionForPost(1220);
-    }
-
-    function sendSessionInfoToServer(session) {
-    	doPost();
-        $.ajax({
-            url: 'http://92.50.13.16:6073/api/sessions/',
-            type: 'POST',
-            dataType: 'json',
-            data: session,
-            success: function (data, textStatus, xhr) {
-                $('[name="postData"]').removeClass("hide");
-                $('[name="resultMessage"]').removeClass("hide");
-
-                $('[name="resultMessage"]').html('اطلاعات به سرور ارسال شد!');
-                $.amaran({'message':'اطلاعات به سرور ارسال شد!'});
-                doSynced();
-            },
-            error: function (xhr, textStatus, errorThrown) {
-	            doReady();
-                console.log('Error in send info');
-            }
-        });
-    }
-  function doSync() {
-  console.log('doSync')
-  	$('[id="syncer"]').css('display', 'block');
-  	$('[id="synced"]').css('display', 'none');
-  	$('[id="ready"]').css('display', 'none');
-  }
-  
-  function doReady() {
-  console.log('doReady')
-  	$('[id="syncer"]').css('display', 'none');
-  	$('[id="synced"]').css('display', 'none');
-  	$('[id="ready"]').css('display', 'block');
-  }
-  
-  function doSynced() {
-  console.log('doSynced')
-  	$('[id="syncer"]').css('display', 'none');
-  	$('[id="synced"]').css('display', 'block');
-  	$('[id="ready"]').css('display', 'none');
-  }
-  
-  function doSaveDb() {
-  	$('[class="text-muted"]').innerHTML = "در حال ذخیره سازی اطلاعات";
-  	doSynced();
-  }
-  
-  function doPost() {
-	  $('[class="text-muted"]').innerHTML = "در حال ذخیره سازی در بانک اصلی";
-	  doSynced();
-  }
-  
-  function doNotSaveDb() {
-	  $('[class="text-muted"]').innerHTML = "ذخیره سازی ناموفق در بانک اطلاعات";
-	  doReady();
-  }
-</script>
-
+<script src="js/ckeditor/config.js?6"></script>
+<script src="js/indexeddbmanager.js?6"></script>
+<script src="js/main.js?6"></script>
 </body>
 </html>

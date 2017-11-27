@@ -28,10 +28,6 @@ sessionRequest.onupgradeneeded = function (event) {
     var reqfileObjectStore = db.createObjectStore("reqfile", { keyPath: "Id", autoIncrement: true });
 }
 
-// file selector
- document.getElementById('fileSelector').addEventListener('change', handleFileSelection, false);
-// ****************
-
 function read(id) {
     var transaction = db.transaction(["session"]);
     var objectStore = transaction.objectStore("session");
@@ -51,10 +47,8 @@ function read(id) {
                 dataType: 'json',
                 success: function (data, textStatus, xhr) {
                     add(data);
-                    getData(data);
                 },
                 error: function (xhr, textStatus, errorThrown) {
-                    // TODO: !?
                     $.amaran({'message':'در اتصال به داده‌های محلی مشکلی پیش آمده است'});
                 }
             });
@@ -77,7 +71,9 @@ function add(sessionData) {
         $.amaran({'message':'جلسه به دیتابیس محلی اضافه شد'});
 
         for (var i in sessionData.RequestResults) {
-            var request = sessionData.RequestResults[i]
+            var request = sessionData.RequestResults[i];
+            request.isSynced = false;
+
             var req = db.transaction(["request"], "readwrite")
                  .objectStore("request")
                  .add(request);
@@ -90,7 +86,8 @@ function add(sessionData) {
                 alert("Unable to add request, is aready exist in your database! ");
             }
         }
-        
+
+        getData(sessionData);
         $.amaran({'message': sessionData.RequestResults.length + ' درخواست به دیتابیس محلی اضافه شد '});
     };
 
@@ -127,6 +124,7 @@ function readSessionForPost(id) {
         }
     };
 }
+
 //************************** REQUEST *******************************//
 function requestRead(id) {
     var transaction = db.transaction(["request"]);
@@ -143,7 +141,6 @@ function requestRead(id) {
     };
 }
 
-
 function requestPut(data) {
     var transaction = db.transaction(["request"], "readwrite");
     var objectStore = transaction.objectStore("request");
@@ -151,7 +148,7 @@ function requestPut(data) {
 
     request.onsuccess = function (event) {
         console.log("successfuly request updated.")
-        doReady();
+        doOrange();
     }
 
     request.onerror = function (event) {
@@ -178,63 +175,34 @@ function sendSessionInfoWithRequestToServer(session) {
     };
 }
 
-//-------------------
-function handleFileSelection(evt) {
-  console.log("handleFileSelection()");
+// Request file database handling
+// PUT REQUEST FILE
+function reqFilePut(file, requestId) {
+  var transaction = db.transaction(["reqfile"], "readwrite");
+  var objectStore = transaction.objectStore("reqfile");
 
-  var files = evt.target.files; 
-  if (!files) {
-    displayMessage("<p>At least one selected file is invalid - do not select any folders.</p><p>Please reselect and try again.</p>");
-    return;
+	var data = {
+    isSynced: false,
+		requestId: requestId,
+		file: file
+	}
+
+  var putRequest = objectStore.put(data);
+  putRequest.onsuccess = function(event) {
+     console.log("success file put in db")
+     uploadFile(file, event.target.result, requestId)
   }
 
-  try {
-    var transaction = db.transaction("reqfile", (IDBTransaction.READ_WRITE ? IDBTransaction.READ_WRITE : 'readwrite')); 
+  putRequest.onerror = function(event) {
+    console.log("putRequest.onerror fired in reqFileUpdate() - error code: " + (event.target.error ? event.target.error : event.target.errorCode));
   }
-  catch (ex) {
-    console.log("db.transaction exception in handleFileSelection() - " + ex.message);
-    return;
-  } 
-
-  transaction.onerror = function(evt) {
-    console.log("transaction.onerror fired in handleFileSelection() - error code: " + (evt.target.error ? evt.target.error : evt.target.errorCode));
-  }
-  transaction.onabort = function() {
-    console.log("transaction.onabort fired in handleFileSelection()");
-  }
-  transaction.oncomplete = function() {
-    console.log("transaction.oncomplete fired in handleFileSelection()");
-  }
-
-  try {
-    var objectStore = transaction.objectStore("reqfile"); 
-
-    for (var i = 0, file; file = files[i]; i++) {
-			var data = {
-				requestId: $('[name="requestId"]').val(),
-				file: file
-			}
-
-      var putRequest = objectStore.put(data); 
-      putRequest.onsuccess = function() {
-         console.log("success file put in db")
-      }
-      putRequest.onerror = function(evt) {
-        console.log("putRequest.onerror fired in handleFileSelection() - error code: " + (evt.target.error ? evt.target.error : evt.target.errorCode));
-      }
-    }             
-  } 
-  catch (ex) {
-    console.log("Transaction and/or put() exception in handleFileSelection() - " + ex.message);
-    return;
-  } 
-} 
+}
 
 /// DISPLAY file
 function displayDB(requestId) {
 	try {
-	    var transaction = db.transaction("reqfile", (IDBTransaction.READ_WRITE ? IDBTransaction.READ_WRITE : 'readwrite')); 
-    var objectStore = transaction.objectStore("reqfile");
+	    var transaction = db.transaction("reqfile", (IDBTransaction.READ_WRITE ? IDBTransaction.READ_WRITE : 'readwrite'));
+      var objectStore = transaction.objectStore("reqfile");
 
     try {
       var cursorRequest = objectStore.openCursor();
@@ -243,23 +211,21 @@ function displayDB(requestId) {
         console.log("cursorRequest.onerror fired in displayDB() - error code: " + (evt.target.error ? evt.target.error : evt.target.errorCode));
       }
 
-      var fileListHTML = "<p><strong>File(s) in database:</strong></p><ul style='margin: -0.5em 0 1em -1em;'>"; 
+      var fileListHTML = "<p><strong>File(s) in database:</strong></p><ul style='margin: -0.5em 0 1em -1em;'>";
 
       cursorRequest.onsuccess = function(evt) {
-        console.log('cursorRequest.onsuccess fired in displayDB()');
-
         var cursor = evt.target.result;
-        if (cursor) {        
+        if (cursor) {
         	if (cursor.value.requestId !== undefined && Number(cursor.value.requestId) === requestId) {
 					  var videoFile = event.target.result;
 				    var URL = window.URL || window.webkitURL;
 				    var fileURL = URL.createObjectURL(cursor.value.file);
-		     
+
 		        fileListHTML += "<li>" + cursor.value.file.name;
 		        fileListHTML += "<p style='margin: 0 0 0 0.75em;'>" + cursor.value.file.lastModifiedDate + "</p>";
 		        fileListHTML += "<p style='margin: 0 0 0 0.75em;'>" + cursor.value.file.size + " bytes</p>";
 						fileListHTML += "<a href='" + fileURL + "'>link</a>";
-			    		    
+
 		        cursor.continue();
           } else {
           	cursor.continue();
@@ -268,17 +234,38 @@ function displayDB(requestId) {
           fileListHTML += "</ul>";
           displayMessage(fileListHTML);
         }
-      } 
+      }
     }
     catch (innerException) {
       console.log("Inner try exception in displayDB() - " + innerException.message);
-    } 
+    }
   }
   catch (outerException) {
     console.log("Outer try exception in displayDB() - " + outerException.message);
-  } 
-} 
+  }
+}
 
-function displayMessage(message) {
-  document.getElementById('messages').innerHTML = message;
-} 
+
+// Update File
+function doFileSynced(id) {
+  var transaction = db.transaction(["reqfile"], (IDBTransaction.READ_WRITE ? IDBTransaction.READ_WRITE : 'readwrite'));
+  var objectStore = transaction.objectStore("reqfile");
+  var reqfile = objectStore.get(id);
+
+  reqfile.onsuccess = function(event) {
+    var data = event.target.result;
+    data.isSynced = true;
+
+    var reqFileUpdate = objectStore.put(data);
+    reqFileUpdate.onerror = function(event) {
+     // Do something with the error
+    };
+    reqFileUpdate.onsuccess = function(event) {
+     // Success - the data is updated!
+    };
+  }
+
+  reqfile.onerror = function (event) {
+    // Do something with the error
+  };
+}

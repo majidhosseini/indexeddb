@@ -1,8 +1,3 @@
-/**
- * @license Copyright (c) 2003-2017, CKSource - Frederico Knabben. All rights reserved.
- * For licensing, see LICENSE.md or http://ckeditor.com/license
- */
-
 CKEDITOR.editorConfig = function( config ) {
 	// Define changes to default configuration here.
 	// For complete reference see:
@@ -32,3 +27,41 @@ CKEDITOR.editorConfig = function( config ) {
 	// Dialog windows are also simplified.
 	config.removeDialogTabs = 'link:advanced';
 };
+
+CKEDITOR.replace('ChangedBody');
+
+
+(function() {
+    var pluginName = 'autosave';
+
+    var timeOutId = 0,
+        delay = 1, // in seconds || CKEDITOR.config.autosave_delay
+        ajaxActive = false;
+
+    var startTimer = function(event) {
+			console.log("startTimer");
+        if(timeOutId) {
+            clearTimeout(timeOutId);
+        }
+        timeOutId = setTimeout(onTimer, delay*1000, event);
+    }
+
+    var onTimer = function (event) {
+			console.log("onTimer");
+        if(ajaxActive) {
+            startTimer(event);
+            ajaxActive = false;
+        }
+        else {
+            ajaxActive = true;
+            updateRequest();
+            console.log("auto save working...");
+        }
+    }
+
+    CKEDITOR.plugins.add( pluginName, {
+        init : function( editor ) {
+            editor.on('key', startTimer);
+        }
+    });
+})();
